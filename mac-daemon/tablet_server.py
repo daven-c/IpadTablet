@@ -17,6 +17,7 @@ Requires Accessibility permission: System Settings > Privacy & Security >
 Accessibility > add the terminal (or python3 binary) running this script.
 """
 import argparse
+import signal
 import socket
 import struct
 import subprocess
@@ -127,6 +128,24 @@ def run(display_index: int | None) -> None:
 
     print(f"Starting iproxy tunnel: Mac:{LOCAL_PORT} -> device:{DEVICE_PORT} over USB")
     iproxy = start_iproxy()
+    time.sleep(0.3)
+    if iproxy.poll() is not None:
+        print(
+            f"ERROR: iproxy exited immediately (code {iproxy.returncode}). "
+            f"Likely another instance is already bound to port {LOCAL_PORT} "
+            "(e.g. a daemon killed with plain `kill` rather than Ctrl-C, "
+            "leaving its iproxy child orphaned). Try: pkill -9 -f iproxy",
+            file=sys.stderr,
+        )
+        sys.exit(1)
+
+    # A plain `kill` sends SIGTERM, which Python does NOT route through
+    # KeyboardInterrupt — without this, that leaves the iproxy child orphaned
+    # and holding the port, silently breaking every future run of this script.
+    def handle_sigterm(signum, frame):
+        raise KeyboardInterrupt
+
+    signal.signal(signal.SIGTERM, handle_sigterm)
 
     try:
         while True:

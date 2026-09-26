@@ -12,6 +12,11 @@ final class AppDelegate: UIResponder, UIApplicationDelegate {
         window.rootViewController = DigitizerViewController()
         window.makeKeyAndVisible()
         self.window = window
+
+        // Auto-lock would background the app, and iOS suspends its network
+        // connections shortly after — the whole point here is to stay connected.
+        application.isIdleTimerDisabled = true
+
         return true
     }
 }
