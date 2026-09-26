@@ -14,6 +14,7 @@ final class DigitizerViewController: UIViewController {
 
     private let statusLabel = UILabel()
     private let settingsButton = UIButton(type: .system)
+    private let lockButton = UIButton(type: .system)
     private let activeAreaOutline = CAShapeLayer()
     private var activeRect: CGRect = .zero
     private var smoothingAlpha: Float = 1.0
@@ -31,6 +32,7 @@ final class DigitizerViewController: UIViewController {
 
         setUpStatusLabel()
         setUpSettingsButton()
+        setUpLockButton()
         setUpActiveAreaOutline()
         setUpDragGesture()
 
@@ -75,6 +77,32 @@ final class DigitizerViewController: UIViewController {
         ])
     }
 
+    private func setUpLockButton() {
+        lockButton.tintColor = .darkGray
+        lockButton.translatesAutoresizingMaskIntoConstraints = false
+        lockButton.addTarget(self, action: #selector(toggleLock), for: .touchUpInside)
+        view.addSubview(lockButton)
+        NSLayoutConstraint.activate([
+            lockButton.centerYAnchor.constraint(equalTo: settingsButton.centerYAnchor),
+            lockButton.trailingAnchor.constraint(equalTo: settingsButton.leadingAnchor, constant: -4),
+            lockButton.widthAnchor.constraint(equalToConstant: 44),
+            lockButton.heightAnchor.constraint(equalToConstant: 44),
+        ])
+        updateLockButtonImage()
+    }
+
+    @objc private func toggleLock() {
+        TabletSettings.positionLocked.toggle()
+        updateLockButtonImage()
+    }
+
+    private func updateLockButtonImage() {
+        let locked = TabletSettings.positionLocked
+        let symbol = locked ? "lock.fill" : "lock.open.fill"
+        lockButton.setImage(UIImage(systemName: symbol), for: .normal)
+        activeAreaOutline.strokeColor = (locked ? UIColor.systemYellow : UIColor.darkGray).cgColor
+    }
+
     private func setUpActiveAreaOutline() {
         activeAreaOutline.strokeColor = UIColor.darkGray.cgColor
         activeAreaOutline.fillColor = UIColor.clear.cgColor
@@ -93,7 +121,7 @@ final class DigitizerViewController: UIViewController {
         switch gesture.state {
         case .began:
             let point = gesture.location(in: view)
-            isDraggingActiveArea = activeRect.contains(point)
+            isDraggingActiveArea = !TabletSettings.positionLocked && activeRect.contains(point)
             dragStartRect = activeRect
         case .changed:
             guard isDraggingActiveArea else { return }
@@ -139,6 +167,7 @@ final class DigitizerViewController: UIViewController {
         activeRect = rect
         activeAreaOutline.path = UIBezierPath(rect: rect).cgPath
         smoothingAlpha = Float(1.0 - TabletSettings.smoothing)
+        updateLockButtonImage()
     }
 
     private func startListening() {

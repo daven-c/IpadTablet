@@ -8,6 +8,7 @@ struct SettingsView: View {
     @State private var width = TabletSettings.activeWidth
     @State private var height = TabletSettings.activeHeight
     @State private var smoothing = TabletSettings.smoothing
+    @State private var positionLocked = TabletSettings.positionLocked
 
     var body: some View {
         NavigationStack {
@@ -67,6 +68,11 @@ struct SettingsView: View {
                 }
 
                 Section {
+                    Toggle("Lock position", isOn: $positionLocked)
+                    Text("Prevents dragging the active area on screen with a finger. Also toggleable from the lock icon next to the gear on the main screen.")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+
                     Button("Recenter active area") {
                         TabletSettings.offsetX = 0
                         TabletSettings.offsetY = 0
@@ -105,6 +111,7 @@ struct SettingsView: View {
         TabletSettings.activeWidth = max(width, 1)
         TabletSettings.activeHeight = max(height, 1)
         TabletSettings.smoothing = smoothing
+        TabletSettings.positionLocked = positionLocked
         TabletSettings.notifyChanged()
         dismiss()
     }

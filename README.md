@@ -95,6 +95,9 @@ Tap the gear icon in the app:
 - Drag the dashed outline anywhere on screen with a finger to reposition the
   active area (fingers are otherwise ignored — only Pencil touches drive the
   cursor, so this can't conflict with tracking).
+- **Lock position** — the lock icon next to the gear (or the toggle in
+  Settings) freezes the active area in place, ignoring drag gestures, so it
+  can't be bumped mid-session. The outline turns yellow while locked.
 
 ### 4. osu!lazer settings
 

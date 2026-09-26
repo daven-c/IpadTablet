@@ -33,6 +33,13 @@ struct TabletSettings {
         set { UserDefaults.standard.set(newValue, forKey: "activeHeight") }
     }
 
+    /// When true, dragging the active area on screen with a finger is
+    /// ignored, so it can't be bumped out of place mid-session.
+    static var positionLocked: Bool {
+        get { UserDefaults.standard.object(forKey: "positionLocked") as? Bool ?? false }
+        set { UserDefaults.standard.set(newValue, forKey: "positionLocked") }
+    }
+
     /// Active area's displacement from screen center, in points. Adjusted by
     /// dragging the area on screen with a finger.
     static var offsetX: Double {
