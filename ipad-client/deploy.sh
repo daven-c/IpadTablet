@@ -12,8 +12,11 @@ fi
 
 UDID="${1:-}"
 if [ -z "$UDID" ]; then
+    # Anchored on the "(UDID)" marker rather than fixed column positions:
+    # a blank Hostname column (e.g. a device named without one) shifts
+    # whitespace-split fields left, so absolute positions aren't reliable.
     UDID=$(xcrun devicectl list devices 2>/dev/null \
-        | awk '/physical/ && /available/ && !/unavailable/ {for (i=1;i<=NF;i++) if ($i=="(UDID)") print $(i-1)}' \
+        | awk '{for (i=1;i<=NF;i++) if ($i=="(UDID)" && $(i+1)=="connected" && $NF=="physical") print $(i-1)}' \
         | head -1)
 fi
 
