@@ -1,0 +1,25 @@
+name: IpadTablet
+options:
+  bundleIdPrefix: com.dc.ipadtablet
+targets:
+  IpadTablet:
+    type: application
+    platform: iOS
+    deploymentTarget: "17.0"
+    sources:
+      - path: Sources
+    info:
+      path: Info.plist
+      properties:
+        UILaunchScreen: {}
+        UIRequiresFullScreen: true
+        UISupportedInterfaceOrientations:
+          - UIInterfaceOrientationLandscapeLeft
+          - UIInterfaceOrientationLandscapeRight
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.dc.ipadtablet
+        TARGETED_DEVICE_FAMILY: "2"
+        SWIFT_VERSION: "5.0"
+        DEVELOPMENT_TEAM: "WT9676Z3R6"
+        CODE_SIGN_STYLE: Automatic
