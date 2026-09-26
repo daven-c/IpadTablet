@@ -31,53 +31,47 @@ switch from the datagram design.
 
 ### 0. Prerequisites (one-time, on the Mac)
 
-```
-brew install libimobiledevice xcodegen
-```
-
-Xcode.app (the full app, not just Command Line Tools) must be installed, its
-license accepted (`sudo xcodebuild -license`), and an Apple ID signed in
-under Xcode > Settings > Accounts (a free personal team is enough for local
-device installs).
-
-### 1. Build and install the iPad app
+Xcode.app (the full app, not just Command Line Tools) must be installed from
+the App Store, with its license accepted and an Apple ID signed in under
+Xcode > Settings > Accounts (a free personal team is enough for local device
+installs) — these two need the GUI and can't be scripted:
 
 ```
-cd ipad-client
-xcodegen generate
-xcodebuild -project IpadTablet.xcodeproj -scheme IpadTablet -sdk iphoneos \
-  -destination 'id=<YOUR_IPAD_UDID>' -allowProvisioningUpdates build
-xcrun devicectl device install app --device <YOUR_IPAD_UDID> \
-  "$(find ~/Library/Developer/Xcode/DerivedData -name IpadTablet.app -path '*Debug-iphoneos*' | head -1)"
-xcrun devicectl device process launch --device <YOUR_IPAD_UDID> com.dc.ipadtablet
+sudo xcode-select -s /Applications/Xcode.app/Contents/Developer
+sudo xcodebuild -license
 ```
 
-Find your iPad's UDID with `xcrun devicectl list devices` (requires the iPad
-connected via USB and unlocked). First run needs two one-time approvals on
-the iPad itself:
+### 1. Run it
+
+```
+./setup.sh
+```
+
+This installs `xcodegen`/`libimobiledevice` via Homebrew if missing, builds
+and installs the iPad app onto whichever connected+paired physical iPad it
+finds (or specify one: `./ipad-client/deploy.sh <UDID>`), then starts the Mac
+daemon in the foreground (Ctrl-C to stop — **not** `kill -9`, which would
+orphan its `iproxy` child and break later runs; plain `kill`/Ctrl-C both
+clean up correctly). Rerunning `./setup.sh` after code changes is safe and
+idempotent.
+
+First install on a given iPad needs two one-time approvals on the iPad
+itself, then rerun `./setup.sh`:
 
 - **Settings > Privacy & Security > Developer Mode** — enable, restart, confirm.
 - **Settings > General > VPN & Device Management** — trust the developer
-  certificate the first time the app fails to launch with a signature error.
+  certificate, shown the first time the app fails to launch with a signature
+  error.
 
-### 2. Mac daemon
+Grant the Mac daemon Accessibility permission too, or `CGEventPost` will
+silently no-op: System Settings > Privacy & Security > Accessibility > add
+your terminal app (or the `python3` binary at `mac-daemon/.venv/bin/python3`).
 
-```
-cd mac-daemon
-python3 -m venv .venv && source .venv/bin/activate
-pip install -r requirements.txt
-python3 tablet_server.py
-```
+The daemon prints every active display with an index at startup and defaults
+to the largest non-main one (i.e. an external monitor over the built-in
+display, if both are present). Override with `./mac-daemon/run.sh --display N`.
 
-Grant Accessibility permission or `CGEventPost` will silently no-op: System
-Settings > Privacy & Security > Accessibility > add your terminal app (or the
-`python3` binary at `.venv/bin/python3`).
-
-It prints every active display with an index at startup and defaults to the
-largest non-main one (i.e. an external monitor over the built-in display, if
-both are present). Override with `python3 tablet_server.py --display N`.
-
-### 3. Connect the devices
+### 2. Connect the devices
 
 Plug the iPad into the Mac with a cable that actually carries data — many
 charging-only cables (especially ones bundled with power banks/chargers)
@@ -85,7 +79,7 @@ won't. If the iPad charges but never shows a "Trust This Computer?" prompt
 when unlocked, that's the tell; `idevice_id -l` will also show nothing.
 Personal Hotspot / Wi-Fi are **not** used or needed.
 
-### 4. Configure the active area on the iPad
+### 3. Configure the active area on the iPad
 
 Tap the gear icon in the app:
 
@@ -102,7 +96,7 @@ Tap the gear icon in the app:
   active area (fingers are otherwise ignored — only Pencil touches drive the
   cursor, so this can't conflict with tracking).
 
-### 5. osu!lazer settings
+### 4. osu!lazer settings
 
 - Settings > Input > turn **off** Raw Input (the daemon already posts
   absolute HID coordinates; raw input inside the game would double-process
