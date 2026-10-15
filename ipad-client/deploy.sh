@@ -15,13 +15,20 @@ if [ -z "$UDID" ]; then
     # Anchored on the "(UDID)" marker rather than fixed column positions:
     # a blank Hostname column (e.g. a device named without one) shifts
     # whitespace-split fields left, so absolute positions aren't reliable.
+    # "connected" is preferred; "available (paired)" is what devicectl reports
+    # for a paired iPad whose connection isn't active yet (locked/just
+    # plugged in), and install/launch will bring it up. Unpaired ("available"
+    # without "(paired)") and "unavailable" devices are still excluded.
     UDID=$(xcrun devicectl list devices 2>/dev/null \
-        | awk '{for (i=1;i<=NF;i++) if ($i=="(UDID)" && $(i+1)=="connected" && $NF=="physical") print $(i-1)}' \
-        | head -1)
+        | awk '{for (i=1;i<=NF;i++) if ($i=="(UDID)" && $NF=="physical") {
+                    if ($(i+1)=="connected") print "0 " $(i-1)
+                    else if ($(i+1)=="available" && $(i+2)=="(paired)") print "1 " $(i-1)
+                }}' \
+        | sort -s -k1,1 | head -1 | cut -d' ' -f2)
 fi
 
 if [ -z "$UDID" ]; then
-    echo "No connected+paired physical iPad found." >&2
+    echo "No connected or paired physical iPad found." >&2
     echo "Check: cable carries data (not charge-only), iPad is unlocked," >&2
     echo "and 'Trust This Computer?' has been accepted. Verify with:" >&2
     echo "  xcrun devicectl list devices" >&2
