@@ -7,7 +7,8 @@ over a wired USB tunnel).
 
 ## How it works
 
-- `ipad-client/`: a blank UIKit + SwiftUI app. `DigitizerViewController`
+- `ipad-client/`: a blank UIKit + SwiftUI app (scene-lifecycle based, as
+  newer iOS requires). `DigitizerViewController`
   listens on a TCP socket and reads Apple Pencil touches at full coalesced
   hardware resolution, normalizes them to (0.0-1.0) against a user-configurable
   active area, and streams them as 8-byte records. `SettingsView` (gear icon,
@@ -41,6 +42,14 @@ sudo xcode-select -s /Applications/Xcode.app/Contents/Developer
 sudo xcodebuild -license
 ```
 
+You'll also need an iPad running iPadOS 17 or later and a Mac with Python 3
+(the daemon's virtualenv is created for you).
+
+**Set your signing team first.** `ipad-client/project.yml` contains the
+author's `DEVELOPMENT_TEAM`; replace it with your own Apple team ID (find it
+under Xcode > Settings > Accounts, or in your developer account) or the build
+will fail to sign. Don't commit that change if you're sending a pull request.
+
 ### 1. Run it
 
 ```
@@ -48,7 +57,7 @@ sudo xcodebuild -license
 ```
 
 This installs `xcodegen`/`libimobiledevice` via Homebrew if missing, builds
-and installs the iPad app onto whichever connected+paired physical iPad it
+and installs the iPad app onto whichever connected or paired physical iPad it
 finds (or specify one: `./ipad-client/deploy.sh <UDID>`), then starts the Mac
 daemon in the foreground (Ctrl-C to stop — **not** `kill -9`, which would
 orphan its `iproxy` child and break later runs; plain `kill`/Ctrl-C both
@@ -108,6 +117,25 @@ Tap the gear icon in the app:
   ever sends move events, never clicks, so there's no tap-conflict to work
   around.
 
+## Troubleshooting
+
+- **"No connected or paired physical iPad found"** — unlock the iPad, check
+  the cable carries data, accept "Trust This Computer?", and confirm the
+  device appears in `xcrun devicectl list devices` (state `connected` or
+  `available (paired)`). You can also pass the UDID explicitly.
+- **"Unable to launch ... because the device was not, or could not be,
+  unlocked"** — the build installed fine; unlock the iPad and rerun.
+- **App crashes immediately on launch** — make sure you're on a current
+  checkout; older versions created the window in `AppDelegate`, which newer
+  iOS rejects. The crash report is in Console/`devicectl` under
+  `IpadTablet-*.ips`.
+- **Cursor doesn't move** — check the status text at the bottom of the iPad
+  ("Connected" vs "Waiting for Mac..."), the daemon's output, and that your
+  terminal has Accessibility permission. Restarting the daemon (Ctrl-C, then
+  `./mac-daemon/run.sh`) re-establishes the connection.
+- **`iproxy` exits immediately** — a stale instance holds the port:
+  `pkill -9 -f iproxy`.
+
 ## Known limits
 
 - If you have multiple Mac displays, `--display` picks by index from the
@@ -118,3 +146,8 @@ Tap the gear icon in the app:
   original UDP design), at the cost of the daemon needing a short reconnect
   backoff to avoid spinning if the link blips — it has one (`RECONNECT_DELAY`
   in `tablet_server.py`).
+
+## Contributing & license
+
+Pull requests are welcome. See [CONTRIBUTING.md](CONTRIBUTING.md) and [SECURITY.md](SECURITY.md).
+Released under the [MIT License](LICENSE).

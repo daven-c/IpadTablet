@@ -1,0 +1,21 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  lint:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Shellcheck
+        run: |
+          brew install shellcheck
+          shellcheck setup.sh ipad-client/deploy.sh mac-daemon/run.sh
+      - name: Python syntax
+        run: python3 -m py_compile mac-daemon/tablet_server.py
